@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>김수환 — 인테리어 웹 명함</title>
+  <style>
+    /* ==========================================================================
+       1. 디자인 토큰 및 테마 변수 (라이트 / 다크 모드)
+       ========================================================================== */
+    :root {
+      --bg-desk: #f7f7f6;
+      --bg-card: #ffffff;
+      --bg-chip: #f4f4f3;
+      --text-primary: #222222;
+      --text-secondary: #595959;
+      --text-muted: #8a8a8a;
+      --line-thin: rgba(34, 34, 34, 0.14);
+      --line-blueprint: rgba(34, 34, 34, 0.08);
+      --line-blueprint-strong: rgba(34, 34, 34, 0.16);
+      --btn-bg: #222222;
+      --btn-text: #ffffff;
+      --btn-hover: #3b3b3b;
+      --shadow-card:
+        0 20px 44px -16px rgba(34, 34, 34, 0.12),
+        0 4px 12px -4px rgba(34, 34, 34, 0.06);
+      --sheen-color: rgba(255, 255, 255, 0.55);
+      --transition-speed: 0.72s;
+    }
+
+    [data-theme="dark"] {
+      --bg-desk: #141414;
+      --bg-card: #1d1d1d;
+      --bg-chip: #272727;
+      --text-primary: #f2f2f2;
+      --text-secondary: #b5b5b5;
+      --text-muted: #7a7a7a;
+      --line-thin: rgba(255, 255, 255, 0.14);
+      --line-blueprint: rgba(255, 255, 255, 0.06);
+      --line-blueprint-strong: rgba(255, 255, 255, 0.14);
+      --btn-bg: #f2f2f2;
+      --btn-text: #1d1d1d;
+      --btn-hover: #dcdcdc;
+      --shadow-card:
+        0 24px 50px -16px rgba(0, 0, 0, 0.65),
+        0 4px 14px -4px rgba(0, 0, 0, 0.45);
+      --sheen-color: rgba(255, 255, 255, 0.12);
+    }
+
+    /* ==========================================================================
+       2. 기본 리셋 및 레이아웃 (모바일 390px 우선, 가로 스크롤 방지)
+       ========================================================================== */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      width: 100%;
+      min-height: 100dvh;
+      overflow-x: hidden;
+      background-color: var(--bg-desk);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo",
+        "Pretendard", "Malgun Gothic", "Noto Sans KR", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 18px 24px;
+    }
+
+    /* ==========================================================================
+       3. 상단 바 (오른쪽 위 밝은 화면 · 어두운 화면 전환 단추)
+       ========================================================================== */
+    .top-bar {
+      width: 100%;
+      max-width: 520px;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .theme-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 13px;
+      border: 1px solid var(--line-thin);
+      border-radius: 999px;
+      background-color: var(--bg-card);
+      color: var(--text-primary);
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      transition: background-color 0.25s ease, border-color 0.25s ease,
+        transform 0.15s ease;
+      touch-action: manipulation;
+    }
+
+    .theme-toggle:hover {
+      border-color: var(--text-primary);
+    }
+
+    .theme-toggle:active {
+      transform: scale(0.97);
+    }
+
+    .theme-toggle:focus-visible {
+      outline: 2px solid var(--text-primary);
+      outline-offset: 2px;
+    }
+
+    /* ==========================================================================
+       4. 중앙 무대 및 3D 카드 컨테이너
+       ========================================================================== */
+    .stage {
+      width: 100%;
+      max-width: 460px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 18px;
+      padding: 8px 0;
+    }
+
+    .card-scene {
+      width: 100%;
+      perspective: 1400px;
+      -webkit-perspective: 1400px;
+    }
+
+    /* 마우스/자이로 기울기를 담당하는 래퍼 */
+    .card-tilt {
+      width: 100%;
+      transform-style: preserve-3d;
+      -webkit-transform-style: preserve-3d;
+      transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+      will-change: transform;
+    }
+
+    /* 3D 180도 뒤집힘을 담당하는 카드 본체 (모바일 390px 포함 전 화면 9:5 가로형 실물 명함 비율) */
+    .card-flipper {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 9 / 5;
+      min-height: 205px;
+      transform-style: preserve-3d;
+      -webkit-transform-style: preserve-3d;
+      transition: transform var(--transition-speed) cubic-bezier(0.22, 1, 0.36, 1);
+      cursor: pointer;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      border-radius: 14px;
+    }
+
+    .card-flipper.is-flipped {
+      transform: rotateY(180deg);
+    }
+
+    .card-flipper:focus-visible {
+      outline: 2px solid var(--text-primary);
+      outline-offset: 4px;
+    }
+
+    /* 앞면 & 뒷면 공통 스타일 */
+    .card-face {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      background-color: var(--bg-card);
+      border: 1px solid var(--line-thin);
+      border-radius: 14px;
+      box-shadow: var(--shadow-card);
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      overflow: hidden;
+      padding: 13px 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: background-color 0.3s ease, border-color 0.3s ease,
+        box-shadow 0.3s ease;
+    }
+
+    .card-face--front {
+      transform: rotateY(0deg);
+      z-index: 2;
+    }
+
+    .card-face--back {
+      transform: rotateY(180deg);
+      z-index: 1;
+    }
+
+    /* 빛 반사(Sheen) 레이어 */
+    .card-sheen {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      border-radius: 14px;
+      background: radial-gradient(
+        circle at var(--sheen-x, 50%) var(--sheen-y, 35%),
+        var(--sheen-color) 0%,
+        transparent 62%
+      );
+      opacity: var(--sheen-opacity, 0);
+      transition: opacity 0.3s ease;
+      z-index: 5;
+    }
+
+    /* ==========================================================================
+       5. 명함 배경 건축 도면(Floor Plan) SVG 장식
+       ========================================================================== */
+    .blueprint-layer {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .blueprint-layer line,
+    .blueprint-layer rect,
+    .blueprint-layer path,
+    .blueprint-layer circle {
+      stroke: var(--line-blueprint);
+      fill: none;
+      stroke-width: 1;
+    }
+
+    .blueprint-layer .bp-accent {
+      stroke: var(--line-blueprint-strong);
+    }
+
+    /* ==========================================================================
+       6. 앞면 내부 구성 (아바타 · 이름 · 지원 직무 · 한 줄 소개 - 가로 배치)
+       ========================================================================== */
+    .face-content {
+      position: relative;
+      z-index: 2;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .front-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--line-thin);
+      padding-bottom: 5px;
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+    }
+
+    .front-body {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      text-align: left;
+      gap: 14px;
+      margin: auto 0;
+      padding: 4px 2px;
+    }
+
+    .avatar-wrap {
+      width: 66px;
+      height: 66px;
+      border-radius: 50%;
+      border: 1px solid var(--line-thin);
+      padding: 3px;
+      background-color: var(--bg-card);
+      flex-shrink: 0;
+    }
+
+    .avatar-img {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+      object-position: center 22%;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      display: block;
+    }
+
+    .avatar-fallback {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #222222 0%, #5a5a5a 100%);
+      color: #ffffff;
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+
+    [data-theme="dark"] .avatar-fallback {
+      background: linear-gradient(135deg, #4a4a4a 0%, #262626 100%);
+      color: #f2f2f2;
+    }
+
+    .identity-group {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 3px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .role-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border: 1px solid var(--line-thin);
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      background-color: var(--bg-card);
+    }
+
+    .person-name {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+
+    .identity-divider {
+      width: 100%;
+      height: 1px;
+      background-color: var(--line-thin);
+      margin: 2px 0;
+    }
+
+    .person-tagline {
+      font-size: 11px;
+      line-height: 1.4;
+      color: var(--text-secondary);
+      word-break: keep-all;
+    }
+
+    .front-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid var(--line-thin);
+      padding-top: 5px;
+      font-size: 9px;
+      color: var(--text-muted);
+    }
+
+    /* ==========================================================================
+       7. 뒷면 내부 구성 (강점 3개 · 쓰는 도구 · 해 본 일 3개 · 포트폴리오 단추)
+       ========================================================================== */
+    .back-grid {
+      display: grid;
+      grid-template-columns: 0.88fr 1.25fr;
+      gap: 10px;
+      align-items: stretch;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .back-section {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      min-width: 0;
+    }
+
+    .section-label {
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .section-label::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background-color: var(--line-thin);
+    }
+
+    .strengths-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .strength-pill {
+      padding: 2px 7px;
+      border: 1px solid var(--line-thin);
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-primary);
+      background-color: var(--bg-card);
+    }
+
+    .tools-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 3px;
+      margin-top: 1px;
+    }
+
+    .tool-chip {
+      padding: 2px 5px;
+      border-radius: 4px;
+      background-color: var(--bg-chip);
+      color: var(--text-secondary);
+      font-size: 8.5px;
+      font-weight: 500;
+      line-height: 1.2;
+    }
+
+    .works-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 4px;
+      flex: 1;
+    }
+
+    .work-item {
+      padding: 4px 7px;
+      border: 1px solid var(--line-thin);
+      border-radius: 7px;
+      background-color: var(--bg-card);
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .work-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 4px;
+    }
+
+    .work-title {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .work-year {
+      font-size: 8.5px;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    .work-desc {
+      font-size: 9px;
+      line-height: 1.25;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .back-action {
+      margin-top: 7px;
+    }
+
+    .portfolio-btn {
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      gap: 5px;
+      width: 100%;
+      padding: 7px 12px;
+      border-radius: 8px;
+      background-color: var(--btn-bg);
+      color: var(--btn-text);
+      text-decoration: none;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      transition: background-color 0.2s ease, transform 0.15s ease;
+      touch-action: manipulation;
+    }
+
+    .portfolio-btn:hover {
+      background-color: var(--btn-hover);
+    }
+
+    .portfolio-btn:active {
+      transform: scale(0.985);
+    }
+
+    .portfolio-btn:focus-visible {
+      outline: 2px solid var(--text-primary);
+      outline-offset: 3px;
+    }
+
+    /* ==========================================================================
+       8. 카드 하단 안내 및 바닥글
+       ========================================================================== */
+    .flip-hint {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      letter-spacing: -0.01em;
+    }
+
+    .flip-hint-icon {
+      display: inline-block;
+      transition: transform 0.4s ease;
+    }
+
+    .is-flipped ~ .flip-hint .flip-hint-icon {
+      transform: rotate(180deg);
+    }
+
+    .site-footer {
+      width: 100%;
+      text-align: center;
+      padding-top: 16px;
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: -0.01em;
+    }
+
+    /* ==========================================================================
+       9. PC 화면 대응 (가로형 실물 명함 비례 유지하며 여유 있게 확장)
+       ========================================================================== */
+    @media (min-width: 640px) {
+      .top-bar {
+        max-width: 540px;
+      }
+
+      .stage {
+        max-width: 540px;
+      }
+
+      .card-flipper {
+        border-radius: 18px;
+      }
+
+      .card-face {
+        border-radius: 18px;
+        padding: 24px 30px;
+      }
+
+      .card-sheen {
+        border-radius: 18px;
+      }
+
+      .front-header,
+      .front-footer {
+        font-size: 11px;
+        padding-bottom: 10px;
+      }
+
+      .front-footer {
+        padding-bottom: 0;
+        padding-top: 10px;
+      }
+
+      .front-body {
+        gap: 24px;
+        padding: 6px 4px;
+      }
+
+      .avatar-wrap {
+        width: 102px;
+        height: 102px;
+        padding: 4px;
+      }
+
+      .avatar-fallback {
+        font-size: 32px;
+      }
+
+      .identity-group {
+        gap: 6px;
+      }
+
+      .role-badge {
+        padding: 4px 11px;
+        font-size: 12px;
+      }
+
+      .person-name {
+        font-size: 28px;
+      }
+
+      .identity-divider {
+        margin: 4px 0;
+      }
+
+      .person-tagline {
+        font-size: 13.5px;
+        max-width: 340px;
+      }
+
+      .back-grid {
+        grid-template-columns: 0.95fr 1.35fr;
+        gap: 18px;
+      }
+
+      .back-section {
+        gap: 8px;
+      }
+
+      .section-label {
+        font-size: 11px;
+        gap: 8px;
+      }
+
+      .strengths-row {
+        gap: 6px;
+      }
+
+      .strength-pill {
+        padding: 4px 11px;
+        font-size: 12px;
+      }
+
+      .tools-row {
+        gap: 5px;
+        margin-top: 2px;
+      }
+
+      .tool-chip {
+        padding: 3px 8px;
+        border-radius: 6px;
+        font-size: 11px;
+      }
+
+      .works-list {
+        gap: 7px;
+      }
+
+      .work-item {
+        padding: 7px 10px;
+        border-radius: 10px;
+        gap: 2px;
+      }
+
+      .work-title {
+        font-size: 12.5px;
+      }
+
+      .work-year {
+        font-size: 11px;
+      }
+
+      .work-desc {
+        font-size: 11.5px;
+      }
+
+      .back-action {
+        margin-top: 12px;
+      }
+
+      .portfolio-btn {
+        padding: 11px 16px;
+        border-radius: 11px;
+        font-size: 13px;
+      }
+    }
+
+    /* ==========================================================================
+       10. 움직임 줄이기 접근성 (prefers-reduced-motion)
+       ========================================================================== */
+    @media (prefers-reduced-motion: reduce) {
+      .card-tilt {
+        transform: none !important;
+        transition: none !important;
+      }
+
+      .card-flipper {
+        transition: transform 0.01ms linear !important;
+      }
+
+      .card-sheen {
+        display: none !important;
+      }
+
+      .theme-toggle,
+      .portfolio-btn {
+        transition: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- 상단 테마 전환 버튼 -->
+  <header class="top-bar">
+    <button
+      type="button"
+      id="themeToggleBtn"
+      class="theme-toggle"
+      aria-label="어두운 화면으로 전환"
+    >
+      <span id="themeIcon" aria-hidden="true">☾</span>
+      <span id="themeText">어두운 화면</span>
+    </button>
+  </header>
+
+  <!-- 중앙 3D 명함 영역 -->
+  <main class="stage">
+    <div class="card-scene">
+      <div class="card-tilt" id="cardTilt">
+        <div
+          class="card-flipper"
+          id="cardFlipper"
+          role="button"
+          tabindex="0"
+          aria-pressed="false"
+          aria-label="명함 카드. 눌러서 앞면과 뒷면을 뒤집을 수 있습니다."
+        >
+          <!-- ===================== 명함 앞면 ===================== -->
+          <section class="card-face card-face--front" aria-label="명함 앞면">
+            <!-- 건축 평면도 스타일 배경 SVG -->
+            <svg
+              class="blueprint-layer"
+              viewBox="0 0 560 360"
+              preserveAspectRatio="xMidYMid slice"
+              aria-hidden="true"
+            >
+              <!-- 외벽 및 치수 보조선 -->
+              <rect x="24" y="24" width="512" height="312" />
+              <line x1="24" y1="68" x2="536" y2="68" stroke-dasharray="3 3" />
+              <line x1="410" y1="24" x2="410" y2="336" />
+              <!-- 여닫이문 회전 궤적 아크 -->
+              <path d="M 410 140 L 462 140 A 52 52 0 0 1 410 192" class="bp-accent" />
+              <line x1="410" y1="140" x2="462" y2="140" class="bp-accent" />
+              <!-- 창호 심볼 및 십자 기준선 -->
+              <rect x="445" y="24" width="64" height="6" class="bp-accent" />
+              <line x1="185" y1="20" x2="185" y2="28" class="bp-accent" />
+              <line x1="181" y1="24" x2="189" y2="24" class="bp-accent" />
+              <!-- 하단 그리드 눈금 -->
+              <line x1="60" y1="292" x2="220" y2="292" />
+              <line x1="60" y1="288" x2="60" y2="296" class="bp-accent" />
+              <line x1="140" y1="288" x2="140" y2="296" class="bp-accent" />
+              <line x1="220" y1="288" x2="220" y2="296" class="bp-accent" />
+            </svg>
+
+            <div class="face-content">
+              <div class="front-header">
+                <span>INTERIOR PLAN · 01</span>
+                <span>SCALE 1:100</span>
+              </div>
+
+              <div class="front-body">
+                <div class="avatar-wrap" id="avatarContainer"></div>
+                <div class="identity-group">
+                  <span class="role-badge" id="frontRole"></span>
+                  <h1 class="person-name" id="frontName"></h1>
+                  <div class="identity-divider" aria-hidden="true"></div>
+                  <p class="person-tagline" id="frontTagline"></p>
+                </div>
+              </div>
+
+              <div class="front-footer">
+                <span>FRONT</span>
+                <span>공간과 사람을 잇는 설계</span>
+              </div>
+            </div>
+
+            <div class="card-sheen" id="sheenFront" aria-hidden="true"></div>
+          </section>
+
+          <!-- ===================== 명함 뒷면 ===================== -->
+          <section class="card-face card-face--back" aria-label="명함 뒷면">
+            <!-- 건축 상세도 스타일 배경 SVG -->
+            <svg
+              class="blueprint-layer"
+              viewBox="0 0 560 360"
+              preserveAspectRatio="xMidYMid slice"
+              aria-hidden="true"
+            >
+              <rect x="20" y="20" width="520" height="320" />
+              <circle cx="492" cy="56" r="22" />
+              <line x1="464" y1="56" x2="520" y2="56" />
+              <line x1="492" y1="28" x2="492" y2="84" />
+              <path d="M 48 316 A 44 44 0 0 1 92 272 L 92 316" class="bp-accent" />
+            </svg>
+
+            <div class="face-content">
+              <div class="back-grid">
+                <!-- 왼쪽/상단: 강점 3개 + 쓰는 도구 -->
+                <div class="back-section">
+                  <div class="section-label">강점 · 도구</div>
+                  <div class="strengths-row" id="backStrengths"></div>
+                  <div class="tools-row" id="backTools"></div>
+                </div>
+
+                <!-- 오른쪽/하단: 해 본 일 3개 -->
+                <div class="back-section">
+                  <div class="section-label">해 본 일</div>
+                  <ul class="works-list" id="backWorks"></ul>
+                </div>
+              </div>
+
+              <!-- 포트폴리오 이동 단추 -->
+              <div class="back-action">
+                <a
+                  id="portfolioLink"
+                  class="portfolio-btn"
+                  href="#"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <span>포트폴리오 보기</span>
+                  <span aria-hidden="true">↗</span>
+                </a>
+              </div>
+            </div>
+
+            <div class="card-sheen" id="sheenBack" aria-hidden="true"></div>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <!-- 카드 아래 안내 문구 -->
+    <p class="flip-hint" id="flipHint" aria-live="polite">
+      <span class="flip-hint-icon" aria-hidden="true">↻</span>
+      <span>눌러서 뒤집기</span>
+    </p>
+  </main>
+
+  <!-- 맨 아래 AI 안내 문구 -->
+  <footer class="site-footer">
+    이 페이지의 그림과 코드는 AI의 도움을 받아 만들었습니다
+  </footer>
+
+  <script>
+    /* ==========================================================================
+       [내 정보] 나중에 아래 PROFILE 객체만 수정하면 화면 전체가 자동으로 바뀝니다.
+       - avatar: 다른 로컬 이미지("avatar.png")나 웹 주소로 바꾸셔도 됩니다.
+                 비워두거나(" ") 이미지가 없으면 이름 첫 글자 그라데이션 원으로 바뀝니다.
+       ========================================================================== */
+    const DEFAULT_AVATAR_SVG = "data:image/svg+xml;utf8," + encodeURIComponent(`
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" shape-rendering="crispEdges">
+        <!-- 어두운 차콜 배경 -->
+        <rect width="32" height="32" fill="#1e1e1e"/>
+        <!-- 목 & 셔츠 칼라 -->
+        <rect x="13" y="18" width="6" height="3" fill="#e5ab84"/>
+        <rect x="12" y="20" width="8" height="2" fill="#d9ccb8"/>
+        <rect x="14" y="21" width="4" height="1" fill="#bfb099"/>
+        <!-- 크림색 니트 스웨터 -->
+        <rect x="8" y="22" width="16" height="10" fill="#dfd0b8"/>
+        <rect x="9" y="22" width="14" height="1" fill="#cbb99e"/>
+        <rect x="7" y="24" width="2" height="8" fill="#cbb99e"/>
+        <rect x="23" y="24" width="2" height="8" fill="#cbb99e"/>
+        <rect x="10" y="24" width="12" height="8" fill="#e6d8c3"/>
+        <!-- 니트 질감 디테일 -->
+        <rect x="11" y="25" width="1" height="1" fill="#cbb99e"/>
+        <rect x="15" y="24" width="1" height="1" fill="#cbb99e"/>
+        <rect x="20" y="25" width="1" height="1" fill="#cbb99e"/>
+        <!-- 얼굴 피부 -->
+        <rect x="11" y="9" width="10" height="9" fill="#f7c59f"/>
+        <rect x="12" y="18" width="8" height="1" fill="#f7c59f"/>
+        <rect x="10" y="12" width="1" height="3" fill="#e5ab84"/>
+        <rect x="21" y="12" width="1" height="3" fill="#e5ab84"/>
+        <rect x="11" y="17" width="1" height="1" fill="#e5ab84"/>
+        <rect x="20" y="17" width="1" height="1" fill="#e5ab84"/>
+        <!-- 갈색 머리카락 -->
+        <rect x="11" y="4" width="10" height="2" fill="#4a3121"/>
+        <rect x="10" y="6" width="12" height="3" fill="#4a3121"/>
+        <rect x="9" y="8" width="2" height="4" fill="#4a3121"/>
+        <rect x="21" y="8" width="2" height="4" fill="#4a3121"/>
+        <rect x="11" y="9" width="2" height="1" fill="#4a3121"/>
+        <rect x="15" y="9" width="2" height="1" fill="#4a3121"/>
+        <rect x="19" y="9" width="2" height="1" fill="#4a3121"/>
+        <rect x="12" y="5" width="6" height="1" fill="#63432e"/>
+        <!-- 눈썹 & 눈 & 입 -->
+        <rect x="12" y="11" width="3" height="1" fill="#3a2518"/>
+        <rect x="17" y="11" width="3" height="1" fill="#3a2518"/>
+        <rect x="13" y="12" width="2" height="2" fill="#2b1b12"/>
+        <rect x="17" y="12" width="2" height="2" fill="#2b1b12"/>
+        <rect x="13" y="12" width="1" height="1" fill="#ffffff"/>
+        <rect x="17" y="12" width="1" height="1" fill="#ffffff"/>
+        <rect x="15" y="14" width="1" height="1" fill="#d9966c"/>
+        <rect x="14" y="16" width="4" height="1" fill="#ffffff"/>
+        <rect x="13" y="16" width="1" height="1" fill="#c97a57"/>
+        <rect x="18" y="16" width="1" height="1" fill="#c97a57"/>
+        <!-- 회색 노트북 & 손 -->
+        <rect x="3" y="23" width="11" height="7" fill="#9aa2ab"/>
+        <rect x="4" y="24" width="9" height="5" fill="#b4bcc4"/>
+        <rect x="8" y="26" width="1" height="1" fill="#e6ecf2"/>
+        <rect x="3" y="30" width="14" height="2" fill="#7c848d"/>
+        <rect x="6" y="29" width="3" height="2" fill="#f7c59f"/>
+        <rect x="13" y="27" width="4" height="2" fill="#f7c59f"/>
+      </svg>
+    `);
+
+    const PROFILE = {
+      name: "김수환",
+      role: "인테리어",
+      tagline: "여러 방향으로 다양한 도전을 하는 사람",
+      avatar: DEFAULT_AVATAR_SVG,
+      strengths: ["성실", "열정", "용"],
+      tools: ["3D MAX", "Sketch Up", "Rhino", "Photoshop", "Ilustrator", "CAD"],
+      works: [
+        {
+          title: "해 본 일 1",
+          desc: "한 줄 설명을 적어 주세요",
+          year: "연도"
+        },
+        {
+          title: "해 본 일 2",
+          desc: "한 줄 설명을 적어 주세요",
+          year: "연도"
+        },
+        {
+          title: "해 본 일 3",
+          desc: "한 줄 설명을 적어 주세요",
+          year: "연도"
+        }
+      ],
+      portfolioUrl: "https://sites.google.com/view/ksh0313/%ED%99%88"
+    };
+
+    /* ==========================================================================
+       화면 렌더링 (PROFILE 데이터 기반)
+       ========================================================================== */
+    function renderProfile() {
+      // 문서 제목
+      document.title = `${PROFILE.name} — ${PROFILE.role}`;
+
+      // 앞면 텍스트
+      document.getElementById("frontName").textContent = PROFILE.name;
+      document.getElementById("frontRole").textContent = PROFILE.role;
+      document.getElementById("frontTagline").textContent = PROFILE.tagline;
+
+      // 아바타 이미지 및 폴백(이름 첫 글자 그라데이션 원)
+      const avatarContainer = document.getElementById("avatarContainer");
+      avatarContainer.innerHTML = "";
+
+      const firstChar = (PROFILE.name || "?").trim().charAt(0);
+      const createFallback = () => {
+        avatarContainer.innerHTML = "";
+        const fallback = document.createElement("div");
+        fallback.className = "avatar-fallback";
+        fallback.setAttribute("role", "img");
+        fallback.setAttribute("aria-label", `${PROFILE.name} 아바타`);
+        fallback.textContent = firstChar;
+        avatarContainer.appendChild(fallback);
+      };
+
+      const avatarSrc = (PROFILE.avatar || "").trim();
+      if (avatarSrc) {
+        const img = document.createElement("img");
+        img.className = "avatar-img";
+        img.src = avatarSrc;
+        img.alt = `${PROFILE.name} 아바타`;
+        img.onerror = createFallback;
+        avatarContainer.appendChild(img);
+      } else {
+        createFallback();
+      }
+
+      // 뒷면: 강점 3개
+      const strengthsEl = document.getElementById("backStrengths");
+      strengthsEl.innerHTML = "";
+      PROFILE.strengths.slice(0, 3).forEach((item) => {
+        const badge = document.createElement("span");
+        badge.className = "strength-pill";
+        badge.textContent = item;
+        strengthsEl.appendChild(badge);
+      });
+
+      // 뒷면: 쓰는 도구
+      const toolsEl = document.getElementById("backTools");
+      toolsEl.innerHTML = "";
+      PROFILE.tools.forEach((tool) => {
+        const chip = document.createElement("span");
+        chip.className = "tool-chip";
+        chip.textContent = tool;
+        toolsEl.appendChild(chip);
+      });
+
+      // 뒷면: 해 본 일 3개 (제목 · 한 줄 설명 · 연도)
+      const worksEl = document.getElementById("backWorks");
+      worksEl.innerHTML = "";
+      PROFILE.works.slice(0, 3).forEach((work) => {
+        const li = document.createElement("li");
+        li.className = "work-item";
+
+        const top = document.createElement("div");
+        top.className = "work-top";
+
+        const title = document.createElement("span");
+        title.className = "work-title";
+        title.textContent = work.title;
+
+        const year = document.createElement("span");
+        year.className = "work-year";
+        year.textContent = work.year;
+
+        top.appendChild(title);
+        top.appendChild(year);
+
+        const desc = document.createElement("p");
+        desc.className = "work-desc";
+        desc.textContent = work.desc;
+
+        li.appendChild(top);
+        li.appendChild(desc);
+        worksEl.appendChild(li);
+      });
+
+      // 뒷면: 포트폴리오 링크
+      const portfolioLink = document.getElementById("portfolioLink");
+      portfolioLink.href = PROFILE.portfolioUrl;
+    }
+
+    /* ==========================================================================
+       인터랙션: 3D 뒤집기 · 마우스/기울기 반응 · 빛 반사 · 테마 전환
+       ========================================================================== */
+    function initInteractions() {
+      const cardTilt = document.getElementById("cardTilt");
+      const cardFlipper = document.getElementById("cardFlipper");
+      const sheenFront = document.getElementById("sheenFront");
+      const sheenBack = document.getElementById("sheenBack");
+      const portfolioLink = document.getElementById("portfolioLink");
+      const themeToggleBtn = document.getElementById("themeToggleBtn");
+      const themeIcon = document.getElementById("themeIcon");
+      const themeText = document.getElementById("themeText");
+
+      const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+      let isFlipped = false;
+
+      // 1. 카드 뒤집기 토글
+      function toggleFlip() {
+        isFlipped = !isFlipped;
+        cardFlipper.classList.toggle("is-flipped", isFlipped);
+        cardFlipper.setAttribute("aria-pressed", String(isFlipped));
+      }
+
+      cardFlipper.addEventListener("click", (e) => {
+        // 포트폴리오 단추 클릭 시에는 뒤집히지 않고 새 탭 링크만 작동
+        if (e.target.closest("#portfolioLink")) return;
+        toggleFlip();
+      });
+
+      cardFlipper.addEventListener("keydown", (e) => {
+        if (e.target.closest("#portfolioLink")) return;
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          toggleFlip();
+        }
+      });
+
+      portfolioLink.addEventListener("click", (e) => {
+        e.stopPropagation();
+      });
+
+      // 2. 기울기 & 빛 반사 업데이트 공통 함수 (normX, normY 범위: -1 ~ 1)
+      function applyTiltAndSheen(normX, normY) {
+        if (reducedMotionQuery.matches) return;
+
+        const maxTilt = 9; // 최대 기울기 각도(deg)
+        const rotateY = normX * maxTilt;
+        const rotateX = -normY * maxTilt;
+
+        cardTilt.style.transform = `rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg)`;
+
+        const sheenX = ((normX + 1) * 50).toFixed(1) + "%";
+        const sheenY = ((normY + 1) * 50).toFixed(1) + "%";
+
+        [sheenFront, sheenBack].forEach((sheen) => {
+          sheen.style.setProperty("--sheen-x", sheenX);
+          sheen.style.setProperty("--sheen-y", sheenY);
+          sheen.style.setProperty("--sheen-opacity", "1");
+        });
+      }
+
+      function resetTiltAndSheen() {
+        cardTilt.style.transform = "rotateX(0deg) rotateY(0deg)";
+        [sheenFront, sheenBack].forEach((sheen) => {
+          sheen.style.setProperty("--sheen-opacity", "0");
+        });
+      }
+
+      // 데스크톱 마우스 움직임
+      cardTilt.addEventListener("mousemove", (e) => {
+        if (reducedMotionQuery.matches) return;
+        const rect = cardTilt.getBoundingClientRect();
+        const normX = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        const normY = ((e.clientY - rect.top) / rect.height) * 2 - 1;
+        applyTiltAndSheen(
+          Math.max(-1, Math.min(1, normX)),
+          Math.max(-1, Math.min(1, normY))
+        );
+      });
+
+      cardTilt.addEventListener("mouseleave", resetTiltAndSheen);
+
+      // 휴대폰 기기 기울기 (DeviceOrientation)
+      window.addEventListener("deviceorientation", (e) => {
+        if (reducedMotionQuery.matches) return;
+        if (e.gamma === null || e.beta === null) return;
+
+        // 좌우 기울기(gamma: -30 ~ 30도), 앞뒤 기울기(beta: 기준 45도 주변 -30 ~ 30도)
+        const normX = Math.max(-1, Math.min(1, e.gamma / 28));
+        const normY = Math.max(-1, Math.min(1, (e.beta - 45) / 28));
+        applyTiltAndSheen(normX, normY);
+      });
+
+      // 3. 밝은 화면 / 어두운 화면 전환
+      function setTheme(theme) {
+        document.documentElement.setAttribute("data-theme", theme);
+        const isDark = theme === "dark";
+        themeIcon.textContent = isDark ? "☀" : "☾";
+        themeText.textContent = isDark ? "밝은 화면" : "어두운 화면";
+        themeToggleBtn.setAttribute(
+          "aria-label",
+          isDark ? "밝은 화면으로 전환" : "어두운 화면으로 전환"
+        );
+      }
+
+      themeToggleBtn.addEventListener("click", () => {
+        const current = document.documentElement.getAttribute("data-theme");
+        setTheme(current === "dark" ? "light" : "dark");
+      });
+    }
+
+    // 초기화 실행
+    renderProfile();
+    initInteractions();
+  </script>
+</body>
+</html>
